@@ -1,13 +1,13 @@
-{
-  "name": "betvic",
-  "version": "1.0.0",
-  "description": "API BetVic",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
-  }
-}
+<div class="box" id="painel" style="display:none;">
+  <h2>🎰 Cassino BetVic</h2>
+
+  <p>Saldo: R$ <span id="saldo">0</span></p>
+
+  <div id="slots" style="font-size:40px; margin:20px;">
+    🎰 🎰 🎰
+  </div>
+
+  <button onclick="girar()">Girar (R$10)</button>
+
+  <p id="resultado"></p>
+</div>
