@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>BetVic 🔥</title>
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+    }
+
+    .box {
+      background: #1e293b;
+      padding: 20px;
+      margin: 20px auto;
+      width: 300px;
+      border-radius: 10px;
+    }
+
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      background: #22c55e;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>BetVic 💸</h1>
+
+  <div class="box">
+    <h2>Registro</h2>
+    <input id="regUser" placeholder="Usuário"><br>
+    <input id="regPass" type="password" placeholder="Senha"><br>
+    <button onclick="register()">Registrar</button>
+  </div>
+
+  <div class="box">
+    <h2>Login</h2>
+    <input id="logUser" placeholder="Usuário"><br>
+    <input id="logPass" type="password" placeholder="Senha"><br>
+    <button onclick="login()">Entrar</button>
+  </div>
+
+  <div class="box" id="painel" style="display:none;">
+    <h2>Painel</h2>
+    <p>Saldo: <span id="saldo">0</span></p>
+    <input id="valor" placeholder="Valor da aposta"><br>
+    <button onclick="apostar()">Apostar</button>
+  </div>
+
+<script>
+const API = "https://betvic.onrender.com";
+
+let usuario = "";
+
+function register() {
+  fetch(API + "/register", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      user: document.getElementById("regUser").value,
+      pass: document.getElementById("regPass").value
+    })
+  })
+  .then(r => r.json())
+  .then(d => alert(JSON.stringify(d)));
+}
+
+function login() {
+  usuario = document.getElementById("logUser").value;
+
+  fetch(API + "/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      user: usuario,
+      pass: document.getElementById("logPass").value
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.erro){
+      alert(d.erro);
+    } else {
+      document.getElementById("painel").style.display = "block";
+      document.getElementById("saldo").innerText = d.saldo;
+    }
+  });
+}
+
+function apostar() {
+  fetch(API + "/bet", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      user: usuario,
+      valor: Number(document.getElementById("valor").value)
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.erro){
+      alert(d.erro);
+    } else {
+      document.getElementById("saldo").innerText = d.saldo;
+    }
+  });
+}
+</script>
+
+</body>
+</html>
