@@ -1,68 +1,37 @@
-const express = require("express");
-const cors = require("cors");
+function girar() {
+  const custo = 10;
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+  fetch(API + "/bet", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      user: usuario,
+      valor: custo
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.erro){
+      alert(d.erro);
+      return;
+    }
 
-let usuarios = {};
+    document.getElementById("saldo").innerText = d.saldo;
 
-app.get("/", (req,res)=>{
-  res.send("API BetVic rodando 🔥");
-});
+    const simbolos = ["🍒","🍋","🍇","⭐","💎"];
 
-app.post("/register", (req, res) => {
-  const { user, pass } = req.body;
+    const s1 = simbolos[Math.floor(Math.random()*simbolos.length)];
+    const s2 = simbolos[Math.floor(Math.random()*simbolos.length)];
+    const s3 = simbolos[Math.floor(Math.random()*simbolos.length)];
 
-  if (usuarios[user]) {
-    return res.json({ erro: "Usuário já existe" });
-  }
+    document.getElementById("slots").innerText = `${s1} ${s2} ${s3}`;
 
-  usuarios[user] = {
-    pass,
-    saldo: 100,
-    historico: []
-  };
-
-  res.json({ ok: true });
-});
-
-app.post("/login", (req, res) => {
-  const { user, pass } = req.body;
-
-  const u = usuarios[user];
-
-  if (!u || u.pass !== pass) {
-    return res.json({ erro: "Login inválido" });
-  }
-
-  res.json({ ok: true, saldo: u.saldo });
-});
-
-app.post("/bet", (req, res) => {
-  const { user, valor } = req.body;
-
-  const u = usuarios[user];
-
-  if (!u || valor > u.saldo) {
-    return res.json({ erro: "Saldo insuficiente" });
-  }
-
-  u.saldo -= valor;
-
-  const win = Math.random() > 0.5;
-
-  if (win) {
-    const ganho = valor * 2;
-    u.saldo += ganho;
-    u.historico.push(`Ganhou ${ganho}`);
-  } else {
-    u.historico.push(`Perdeu ${valor}`);
-  }
-
-  res.json({ saldo: u.saldo });
-});
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Servidor rodando 🚀");
-});
+    if (s1 === s2 && s2 === s3) {
+      document.getElementById("resultado").innerText = "🔥 JACKPOT!!!";
+    } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+      document.getElementById("resultado").innerText = "✨ Quase! Ganhou algo";
+    } else {
+      document.getElementById("resultado").innerText = "💀 Perdeu tudo";
+    }
+  });
+}
