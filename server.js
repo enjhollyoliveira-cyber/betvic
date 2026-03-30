@@ -1,74 +1,49 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-mongoose.connect(process.env.MONGO_URL);
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ Conectado ao MongoDB da BetVic!"))
+  .catch(err => console.log("❌ Erro ao conectar:", err));
 
-const User = mongoose.model("User", {
-  user: String,
-  pass: String,
-  saldo: Number,
-  historico: Array
+const userSchema = new mongoose.Schema({
+  nome: String,
+  saldo: { type: Number, default: 0 }
 });
 
-app.get("/", (req,res)=>{
-  res.send("API BetVic com DB 🔥");
+const User = mongoose.model('User', userSchema);
+
+app.post('/criar-usuario', async (req, res) => {
+  const { nome } = req.body;
+  const novo = new User({ nome });
+  await novo.save();
+  res.send({ msg: "Usuário criado!", id: novo._id });
 });
 
-app.post("/register", async (req,res)=>{
-  const { user, pass } = req.body;
-
-  const existe = await User.findOne({ user });
-  if(existe) return res.json({ erro: "Usuário existe" });
-
-  await User.create({
-    user,
-    pass,
-    saldo: 100,
-    historico: []
-  });
-
-  res.json({ ok:true });
+app.post('/depositar', async (req, res) => {
+  const { userId, valor } = req.body;
+  const user = await User.findById(userId);
+  if (!user) return res.send("Usuário não encontrado!");
+  user.saldo += valor;
+  await user.save();
+  console.log(`💰 Depósito de R$${valor} por ${user.nome}`);
+  res.send(`Depósito de R$${valor} realizado! Saldo atual: R$${user.saldo}`);
 });
 
-app.post("/login", async (req,res)=>{
-  const { user, pass } = req.body;
-
-  const u = await User.findOne({ user, pass });
-  if(!u) return res.json({ erro:"Login inválido" });
-
-  res.json({ saldo: u.saldo });
+app.post('/sacar', async (req, res) => {
+  const { userId, valor } = req.body;
+  const user = await User.findById(userId);
+  if (!user) return res.send("Usuário não encontrado!");
+  if (user.saldo < valor) return res.send("Saldo insuficiente!");
+  user.saldo -= valor;
+  await user.save();
+  res.send(`Saque de R$${valor} realizado! Saldo atual: R$${user.saldo}`);
 });
 
-app.post("/bet", async (req,res)=>{
-  const { user, valor } = req.body;
-
-  const u = await User.findOne({ user });
-  if(!u || valor > u.saldo){
-    return res.json({ erro:"Saldo insuficiente" });
-  }
-
-  u.saldo -= valor;
-
-  const win = Math.random() > 0.5;
-
-  if(win){
-    const ganho = valor * 2;
-    u.saldo += ganho;
-    u.historico.push("Ganhou " + ganho);
-  } else {
-    u.historico.push("Perdeu " + valor);
-  }
-
-  await u.save();
-
-  res.json({ saldo: u.saldo });
-});
-
-app.listen(process.env.PORT || 3000, ()=>{
-  console.log("Servidor com DB 🚀");
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Servidor BetVic rodando na porta ${PORT}`));
