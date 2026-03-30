@@ -1,37 +1,74 @@
-function girar() {
-  const custo = 10;
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
 
-  fetch(API + "/bet", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      user: usuario,
-      valor: custo
-    })
-  })
-  .then(r => r.json())
-  .then(d => {
-    if(d.erro){
-      alert(d.erro);
-      return;
-    }
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-    document.getElementById("saldo").innerText = d.saldo;
+mongoose.connect(process.env.MONGO_URL);
 
-    const simbolos = ["🍒","🍋","🍇","⭐","💎"];
+const User = mongoose.model("User", {
+  user: String,
+  pass: String,
+  saldo: Number,
+  historico: Array
+});
 
-    const s1 = simbolos[Math.floor(Math.random()*simbolos.length)];
-    const s2 = simbolos[Math.floor(Math.random()*simbolos.length)];
-    const s3 = simbolos[Math.floor(Math.random()*simbolos.length)];
+app.get("/", (req,res)=>{
+  res.send("API BetVic com DB 🔥");
+});
 
-    document.getElementById("slots").innerText = `${s1} ${s2} ${s3}`;
+app.post("/register", async (req,res)=>{
+  const { user, pass } = req.body;
 
-    if (s1 === s2 && s2 === s3) {
-      document.getElementById("resultado").innerText = "🔥 JACKPOT!!!";
-    } else if (s1 === s2 || s2 === s3 || s1 === s3) {
-      document.getElementById("resultado").innerText = "✨ Quase! Ganhou algo";
-    } else {
-      document.getElementById("resultado").innerText = "💀 Perdeu tudo";
-    }
+  const existe = await User.findOne({ user });
+  if(existe) return res.json({ erro: "Usuário existe" });
+
+  await User.create({
+    user,
+    pass,
+    saldo: 100,
+    historico: []
   });
-}
+
+  res.json({ ok:true });
+});
+
+app.post("/login", async (req,res)=>{
+  const { user, pass } = req.body;
+
+  const u = await User.findOne({ user, pass });
+  if(!u) return res.json({ erro:"Login inválido" });
+
+  res.json({ saldo: u.saldo });
+});
+
+app.post("/bet", async (req,res)=>{
+  const { user, valor } = req.body;
+
+  const u = await User.findOne({ user });
+  if(!u || valor > u.saldo){
+    return res.json({ erro:"Saldo insuficiente" });
+  }
+
+  u.saldo -= valor;
+
+  const win = Math.random() > 0.5;
+
+  if(win){
+    const ganho = valor * 2;
+    u.saldo += ganho;
+    u.historico.push("Ganhou " + ganho);
+  } else {
+    u.historico.push("Perdeu " + valor);
+  }
+
+  await u.save();
+
+  res.json({ saldo: u.saldo });
+});
+
+app.listen(process.env.PORT || 3000, ()=>{
+  console.log("Servidor com DB 🚀");
+});
