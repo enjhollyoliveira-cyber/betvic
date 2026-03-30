@@ -1,118 +1,191 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>BetVic 🔥</title>
-  <style>
-    body {
-      background: #0f172a;
-      color: white;
-      font-family: Arial;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<title>BetVic 💸</title>
 
-    .box {
-      background: #1e293b;
-      padding: 20px;
-      margin: 20px auto;
-      width: 300px;
-      border-radius: 10px;
-    }
+<style>
+body {
+  background: #0f172a;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+}
 
-    input, button {
-      margin: 5px;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-    }
+.box {
+  background: #1e293b;
+  padding: 20px;
+  margin: 20px auto;
+  width: 320px;
+  border-radius: 10px;
+}
 
-    button {
-      background: #22c55e;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+input, button {
+  margin: 5px;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+}
+
+button {
+  background: #22c55e;
+  color: white;
+}
+
+#slots {
+  font-size: 40px;
+  margin: 15px;
+}
+</style>
 </head>
+
 <body>
 
-  <h1>BetVic 💸</h1>
+<h1>🎰 BetVic</h1>
 
-  <div class="box">
-    <h2>Registro</h2>
-    <input id="regUser" placeholder="Usuário"><br>
-    <input id="regPass" type="password" placeholder="Senha"><br>
-    <button onclick="register()">Registrar</button>
-  </div>
+<div class="box">
+  <h2>Registro</h2>
+  <input id="regUser" placeholder="Usuário"><br>
+  <input id="regPass" type="password" placeholder="Senha"><br>
+  <button onclick="register()">Registrar</button>
+</div>
 
-  <div class="box">
-    <h2>Login</h2>
-    <input id="logUser" placeholder="Usuário"><br>
-    <input id="logPass" type="password" placeholder="Senha"><br>
-    <button onclick="login()">Entrar</button>
-  </div>
+<div class="box">
+  <h2>Login</h2>
+  <input id="logUser" placeholder="Usuário"><br>
+  <input id="logPass" type="password" placeholder="Senha"><br>
+  <button onclick="login()">Entrar</button>
+</div>
 
-  <div class="box" id="painel" style="display:none;">
-    <h2>Painel</h2>
-    <p>Saldo: <span id="saldo">0</span></p>
-    <input id="valor" placeholder="Valor da aposta"><br>
-    <button onclick="apostar()">Apostar</button>
-  </div>
+<div class="box" id="painel" style="display:none;">
+  <h2>Painel</h2>
+
+  <p>Saldo: R$ <span id="saldo">0</span></p>
+
+  <h3>💳 Depósito</h3>
+  <input id="deposito" placeholder="Valor"><br>
+  <button onclick="depositar()">Depositar</button>
+
+  <h3>💸 Saque</h3>
+  <input id="saque" placeholder="Valor"><br>
+  <button onclick="sacar()">Sacar</button>
+
+  <h3>🎰 Cassino</h3>
+  <div id="slots">🎰 🎰 🎰</div>
+  <button onclick="girar()">Girar (R$10)</button>
+
+  <p id="resultado"></p>
+
+  <h3>📜 Histórico</h3>
+  <ul id="historico"></ul>
+</div>
 
 <script>
 const API = "https://betvic.onrender.com";
 
 let usuario = "";
+let saldoAtual = 0;
 
-function register() {
+function atualizarSaldo(valor){
+  saldoAtual = valor;
+  document.getElementById("saldo").innerText = saldoAtual;
+}
+
+function addHistorico(texto){
+  const li = document.createElement("li");
+  li.innerText = texto;
+  document.getElementById("historico").appendChild(li);
+}
+
+function register(){
   fetch(API + "/register", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
-      user: document.getElementById("regUser").value,
-      pass: document.getElementById("regPass").value
+      user: regUser.value,
+      pass: regPass.value
     })
   })
-  .then(r => r.json())
-  .then(d => alert(JSON.stringify(d)));
+  .then(r=>r.json())
+  .then(d=>alert(d.erro || "Registrado 🔥"));
 }
 
-function login() {
-  usuario = document.getElementById("logUser").value;
+function login(){
+  usuario = logUser.value;
 
   fetch(API + "/login", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
       user: usuario,
-      pass: document.getElementById("logPass").value
+      pass: logPass.value
     })
   })
-  .then(r => r.json())
-  .then(d => {
+  .then(r=>r.json())
+  .then(d=>{
     if(d.erro){
       alert(d.erro);
     } else {
-      document.getElementById("painel").style.display = "block";
-      document.getElementById("saldo").innerText = d.saldo;
+      document.getElementById("painel").style.display="block";
+      atualizarSaldo(d.saldo);
     }
   });
 }
 
-function apostar() {
+function depositar(){
+  const v = Number(document.getElementById("deposito").value);
+  if(!v || v<=0) return alert("valor inválido");
+
+  saldoAtual += v;
+  atualizarSaldo(saldoAtual);
+  addHistorico("Depositou R$"+v);
+}
+
+function sacar(){
+  const v = Number(document.getElementById("saque").value);
+  if(!v || v<=0) return alert("valor inválido");
+
+  if(v > saldoAtual) return alert("sem saldo");
+
+  saldoAtual -= v;
+  atualizarSaldo(saldoAtual);
+  addHistorico("Sacou R$"+v);
+}
+
+function girar(){
   fetch(API + "/bet", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
       user: usuario,
-      valor: Number(document.getElementById("valor").value)
+      valor: 10
     })
   })
-  .then(r => r.json())
-  .then(d => {
+  .then(r=>r.json())
+  .then(d=>{
     if(d.erro){
       alert(d.erro);
+      return;
+    }
+
+    atualizarSaldo(d.saldo);
+
+    const s = ["🍒","🍋","🍇","⭐","💎"];
+    const a = s[Math.floor(Math.random()*5)];
+    const b = s[Math.floor(Math.random()*5)];
+    const c = s[Math.floor(Math.random()*5)];
+
+    slots.innerText = a+" "+b+" "+c;
+
+    if(a===b && b===c){
+      resultado.innerText = "🔥 JACKPOT!";
+      addHistorico("Ganhou grande!");
+    } else if(a===b || b===c || a===c){
+      resultado.innerText = "✨ Ganhou!";
+      addHistorico("Ganhou");
     } else {
-      document.getElementById("saldo").innerText = d.saldo;
+      resultado.innerText = "💀 Perdeu";
+      addHistorico("Perdeu");
     }
   });
 }
