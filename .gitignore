@@ -1,0 +1,19 @@
+# Ignorar variáveis de ambiente
+.env
+
+# Dependências Node
+node_modules/
+
+# Logs
+*.log
+
+# Diretórios de build / produção
+dist/
+build/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Cache do npm
+.npm
